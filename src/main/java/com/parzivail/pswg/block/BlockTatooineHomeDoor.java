@@ -2,6 +2,7 @@ package com.parzivail.pswg.block;
 
 import com.parzivail.pswg.blockentity.TatooineHomeDoorBlockEntity;
 import com.parzivail.pswg.container.SwgBlocks;
+import com.parzivail.util.block.RotatingBlock;
 import com.parzivail.util.block.VoxelShapeUtil;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
@@ -50,26 +51,38 @@ public class BlockTatooineHomeDoor extends RotatingBlock
 	}
 
 	private static final int SIZE = 2;
-	private static final VoxelShape SHAPE_CLOSED = VoxelShapes.union(
+	private static final VoxelShape INTERACTION_SHAPE_CLOSED = VoxelShapes.union(
 			VoxelShapes.cuboid(0, 1 - 0.0625, 0.25, 1, 1, 0.75),
 			VoxelShapes.cuboid(0, 0, 0.25, 0.0625, 1, 0.75),
 			VoxelShapes.cuboid(1 - 0.0625, 0, 0.25, 1, 1, 0.75),
 			VoxelShapes.cuboid(0.0625, 0, 0.375, 1 - 0.0625, 1 - 0.0625, 0.625));
-	private static final VoxelShape SHAPE_OPEN = VoxelShapes.union(
+	private static final VoxelShape INTERACTION_SHAPE_OPEN = VoxelShapes.union(
 			VoxelShapes.cuboid(0, 1 - 0.0625, 0.25, 1, 1, 0.75),
 			VoxelShapes.cuboid(0, 0, 0.25, 0.0625, 1, 0.75),
 			VoxelShapes.cuboid(1 - 0.0625, 0, 0.25, 1, 1, 0.75),
 			VoxelShapes.cuboid(1 - 1.5 * 0.0625, 0, 0.375, 1 - 0.0625, 1 - 0.0625, 0.625));
+	private static final VoxelShape COLLISION_SHAPE_CLOSED = VoxelShapes.union(
+			VoxelShapes.cuboid(0, 0, 0.25, 0.0625, 1, 0.75),
+			VoxelShapes.cuboid(1 - 0.0625, 0, 0.25, 1, 1, 0.75),
+			VoxelShapes.cuboid(0.0625, 0, 0.375, 1 - 0.0625, 1 - 0.0625, 0.625));
+	private static final VoxelShape COLLISION_SHAPE_OPEN = VoxelShapes.union(
+			VoxelShapes.cuboid(0, 0, 0.25, 0.0625, 1, 0.75),
+			VoxelShapes.cuboid(1 - 0.0625, 0, 0.25, 1, 1, 0.75),
+			VoxelShapes.cuboid(1 - 1.5 * 0.0625, 0, 0.375, 1 - 0.0625, 1 - 0.0625, 0.625));
 
-	private static final VoxelShape[] SHAPES_CLOSED = new VoxelShape[4];
-	private static final VoxelShape[] SHAPES_OPEN = new VoxelShape[4];
+	private static final VoxelShape[] INTERACTION_SHAPES_CLOSED = new VoxelShape[4];
+	private static final VoxelShape[] INTERACTION_SHAPES_OPEN = new VoxelShape[4];
+	private static final VoxelShape[] COLLISION_SHAPES_CLOSED = new VoxelShape[4];
+	private static final VoxelShape[] COLLISION_SHAPES_OPEN = new VoxelShape[4];
 
 	static
 	{
 		for (int i = 0; i < 4; i++)
 		{
-			SHAPES_CLOSED[i] = VoxelShapeUtil.rotate(SHAPE_CLOSED, i);
-			SHAPES_OPEN[i] = VoxelShapeUtil.rotate(SHAPE_OPEN, i);
+			INTERACTION_SHAPES_CLOSED[i] = VoxelShapeUtil.rotate(INTERACTION_SHAPE_CLOSED, i);
+			INTERACTION_SHAPES_OPEN[i] = VoxelShapeUtil.rotate(INTERACTION_SHAPE_OPEN, i);
+			COLLISION_SHAPES_CLOSED[i] = VoxelShapeUtil.rotate(COLLISION_SHAPE_CLOSED, i);
+			COLLISION_SHAPES_OPEN[i] = VoxelShapeUtil.rotate(COLLISION_SHAPE_OPEN, i);
 		}
 	}
 
@@ -91,15 +104,26 @@ public class BlockTatooineHomeDoor extends RotatingBlock
 	@Override
 	public VoxelShape getOutlineShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context)
 	{
+		return getShape(state, world, pos, INTERACTION_SHAPES_OPEN, INTERACTION_SHAPES_CLOSED);
+	}
+
+	@Override
+	public VoxelShape getCollisionShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context)
+	{
+		return getShape(state, world, pos, COLLISION_SHAPES_OPEN, COLLISION_SHAPES_CLOSED);
+	}
+
+	protected VoxelShape getShape(BlockState state, BlockView world, BlockPos pos, VoxelShape[] openShapes, VoxelShape[] closedShapes)
+	{
 		BlockPos controllerPos = getController(world, pos);
 		TatooineHomeDoorBlockEntity e = (TatooineHomeDoorBlockEntity)world.getBlockEntity(controllerPos);
 
 		int rotation = (state.get(ROTATION) + 3) % 4;
 
 		if (e == null || !e.isOpening() || e.isMoving())
-			return SHAPES_OPEN[rotation];
+			return openShapes[rotation];
 
-		return SHAPES_CLOSED[rotation];
+		return closedShapes[rotation];
 	}
 
 	@Override
@@ -128,10 +152,47 @@ public class BlockTatooineHomeDoor extends RotatingBlock
 			BlockPos controllerPos = getController(world, pos);
 			TatooineHomeDoorBlockEntity e = (TatooineHomeDoorBlockEntity)world.getBlockEntity(controllerPos);
 
+			assert e != null;
+
 			if (!e.isMoving())
+			{
+				e.setPowered(false);
 				e.startMoving();
+				return ActionResult.SUCCESS;
+			}
+
+			return ActionResult.CONSUME;
 		}
-		return super.onUse(state, world, pos, player, hand, hit);
+	}
+
+	public void neighborUpdate(BlockState state, World world, BlockPos pos, Block block, BlockPos fromPos, boolean notify)
+	{
+		BlockPos controllerPos = getController(world, pos);
+		TatooineHomeDoorBlockEntity e = (TatooineHomeDoorBlockEntity)world.getBlockEntity(controllerPos);
+
+		if (e == null)
+			return;
+
+		boolean wasPowered = e.isPowered();
+		boolean isPowered = world.isReceivingRedstonePower(pos);
+
+		if (!world.isClient && block != this)
+		{
+			e.setPowered(isPowered);
+			if (!e.isMoving())
+			{
+				if (wasPowered && !isPowered && !e.isOpening())
+				{
+					e.setDirection(false);
+					e.startMoving();
+				}
+				else if (isPowered && !wasPowered && e.isOpening())
+				{
+					e.setDirection(true);
+					e.startMoving();
+				}
+			}
+		}
 	}
 
 	public boolean canPlace(World world, BlockPos pos, BlockState state, @Nullable LivingEntity placer)
@@ -164,7 +225,7 @@ public class BlockTatooineHomeDoor extends RotatingBlock
 
 	public void onBreak(World world, BlockPos pos, BlockState state, PlayerEntity player)
 	{
-		if (!world.isClient && player.isCreative())
+		if (!world.isClient)
 		{
 			int part = state.get(PART);
 

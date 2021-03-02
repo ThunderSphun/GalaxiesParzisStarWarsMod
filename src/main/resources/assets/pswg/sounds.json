@@ -72,7 +72,7 @@
 			"pswg:blaster/eweb"
 		]
 	},
-	"blaster.fire.ionization": {
+	"blaster.fire.ion": {
 		"sounds": [
 			"pswg:blaster/ion"
 		]
@@ -110,6 +110,19 @@
 	"blaster.fire.dl21": {
 		"sounds": [
 			"pswg:blaster/dl44"
+		]
+	},
+	"ship.blaster.fire.xwingt65b": {
+		"sounds": [
+			{
+				"name": "pswg:ship/xwing/fire",
+				"attenuation_distance": 32
+			}
+		]
+	},
+	"door.pneumatic": {
+		"sounds": [
+			"pswg:door/pneumatic"
 		]
 	}
 }

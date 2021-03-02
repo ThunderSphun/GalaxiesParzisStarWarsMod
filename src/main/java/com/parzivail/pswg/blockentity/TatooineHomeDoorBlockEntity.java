@@ -1,21 +1,24 @@
 package com.parzivail.pswg.blockentity;
 
 import com.parzivail.pswg.container.SwgBlocks;
+import com.parzivail.pswg.container.SwgSounds;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.block.entity.BlockEntityClientSerializable;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.sound.SoundCategory;
 import net.minecraft.util.Tickable;
 
 public class TatooineHomeDoorBlockEntity extends BlockEntity implements Tickable, BlockEntityClientSerializable
 {
-	private static final int ANIMATION_TIME = 15;
+	private static final int ANIMATION_TIME = 10;
 
 	private static final byte MASK_MOVING = (byte)0b10000000;
 	private static final byte MASK_DIRECTION = (byte)0b01000000;
-	private static final byte MASK_TIMER = (byte)0b00111111;
+	private static final byte MASK_POWERED = (byte)0b00100000;
+	private static final byte MASK_TIMER = (byte)0b00011111;
 	private byte timer = 0;
 
 	public TatooineHomeDoorBlockEntity()
@@ -79,8 +82,18 @@ public class TatooineHomeDoorBlockEntity extends BlockEntity implements Tickable
 		timer &= ~MASK_DIRECTION;
 		if (opening)
 			timer |= MASK_DIRECTION;
+	}
 
-		this.markDirty();
+	public void setPowered(boolean powered)
+	{
+		timer &= ~MASK_POWERED;
+		if (powered)
+			timer |= MASK_POWERED;
+	}
+
+	public boolean isPowered()
+	{
+		return (timer & MASK_POWERED) != 0;
 	}
 
 	public int getTimer()
@@ -92,8 +105,6 @@ public class TatooineHomeDoorBlockEntity extends BlockEntity implements Tickable
 	{
 		timer &= ~MASK_TIMER;
 		timer |= (newTimer & MASK_TIMER);
-
-		this.markDirty();
 	}
 
 	public void startMoving()
@@ -114,12 +125,17 @@ public class TatooineHomeDoorBlockEntity extends BlockEntity implements Tickable
 	@Override
 	public void tick()
 	{
+		if (world == null)
+			return;
+
 		if (isMoving())
 		{
 			int timer = getTimer();
 
 			if (timer == 0)
 				return;
+			else if (timer == ANIMATION_TIME - 1 && world.isClient)
+				world.playSound(pos.getX(), pos.getY(), pos.getZ(), SwgSounds.Door.PNEUMATIC, SoundCategory.BLOCKS, 1, 1, true);
 
 			timer--;
 

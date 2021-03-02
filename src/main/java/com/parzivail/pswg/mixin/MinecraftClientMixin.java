@@ -2,8 +2,9 @@ package com.parzivail.pswg.mixin;
 
 import com.parzivail.pswg.Client;
 import com.parzivail.pswg.client.texture.remote.RemoteTextureProvider;
-import com.parzivail.pswg.util.Lumberjack;
-import com.parzivail.util.item.LeftClickHandler;
+import com.parzivail.pswg.client.texture.stacked.StackedTextureProvider;
+import com.parzivail.pswg.handler.LeftClickHandler;
+import com.parzivail.util.Lumberjack;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
@@ -28,7 +29,9 @@ public class MinecraftClientMixin
 	@Final
 	private TextureManager textureManager;
 
-	@Shadow @Nullable public ClientPlayerInteractionManager interactionManager;
+	@Shadow
+	@Nullable
+	public ClientPlayerInteractionManager interactionManager;
 
 	@Inject(method = "<init>", at = @At("TAIL"))
 	private void init(RunArgs args, CallbackInfo ci)
@@ -36,6 +39,7 @@ public class MinecraftClientMixin
 		File remoteAssetDir = new File(args.directories.assetDir, "pswgRemoteAssets");
 		Lumberjack.debug("Remote asset directory: %s", remoteAssetDir.getPath());
 		Client.remoteTextureProvider = new RemoteTextureProvider(textureManager, "pswg:remote", remoteAssetDir);
+		Client.stackedTextureProvider = new StackedTextureProvider(textureManager, "pswg:stacked");
 	}
 
 	@Inject(method = "handleInputEvents()V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/MinecraftClient;handleBlockBreaking(Z)V", shift = At.Shift.BEFORE), cancellable = true)
@@ -46,8 +50,8 @@ public class MinecraftClientMixin
 		LeftClickHandler.handleInputEvents(ci, interactionManager);
 	}
 
-	@Inject(method = "handleInputEvents()V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/MinecraftClient;doAttack()V", shift = At.Shift.BEFORE), cancellable = true)
-	private void handleInputEventsDoAttack(CallbackInfo ci)
+	@Inject(method = "Lnet/minecraft/client/MinecraftClient;doAttack()V", at = @At("HEAD"), cancellable = true)
+	private void doAttack(CallbackInfo ci)
 	{
 		LeftClickHandler.doAttack(ci);
 	}

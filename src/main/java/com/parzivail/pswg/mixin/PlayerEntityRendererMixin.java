@@ -1,7 +1,7 @@
 package com.parzivail.pswg.mixin;
 
-import com.parzivail.pswg.client.features.ForceFeatureRenderer;
-import com.parzivail.pswg.entity.ShipEntity;
+import com.parzivail.pswg.client.render.features.ForceFeatureRenderer;
+import com.parzivail.pswg.entity.ship.ShipEntity;
 import com.parzivail.pswg.item.blaster.BlasterItem;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -27,7 +27,7 @@ public class PlayerEntityRendererMixin
 	@Inject(method = "Lnet/minecraft/client/render/entity/PlayerEntityRenderer;<init>(Lnet/minecraft/client/render/entity/EntityRenderDispatcher;Z)V", at = @At("TAIL"))
 	private void init(CallbackInfo ci)
 	{
-		((LivingEntityRendererAccessor<AbstractClientPlayerEntity, PlayerEntityModel<AbstractClientPlayerEntity>>)this).getFeatures().add(new ForceFeatureRenderer<>((PlayerEntityRenderer)(Object)this));
+		((LivingEntityRendererMixin<AbstractClientPlayerEntity, PlayerEntityModel<AbstractClientPlayerEntity>>)this).getFeatures().add(new ForceFeatureRenderer<>((PlayerEntityRenderer)(Object)this));
 	}
 
 	@Inject(method = "getArmPose", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/AbstractClientPlayerEntity;getStackInHand(Lnet/minecraft/util/Hand;)Lnet/minecraft/item/ItemStack;"), cancellable = true)

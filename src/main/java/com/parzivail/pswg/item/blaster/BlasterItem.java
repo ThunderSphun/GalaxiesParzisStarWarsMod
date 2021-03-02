@@ -1,56 +1,44 @@
 package com.parzivail.pswg.item.blaster;
 
-import com.parzivail.pswg.container.SwgEntities;
+import com.parzivail.pswg.Client;
+import com.parzivail.pswg.Galaxies;
+import com.parzivail.pswg.Resources;
+import com.parzivail.pswg.access.util.Matrix4fAccessUtil;
 import com.parzivail.pswg.container.SwgSounds;
-import com.parzivail.pswg.entity.BlasterBoltEntity;
-import com.parzivail.pswg.item.IZoomingItem;
-import com.parzivail.pswg.util.MathUtil;
-import com.parzivail.util.entity.EntityUtil;
+import com.parzivail.pswg.data.SwgBlasterManager;
+import com.parzivail.pswg.item.blaster.data.*;
+import com.parzivail.pswg.util.BlasterUtil;
+import com.parzivail.pswg.util.QuatUtil;
 import com.parzivail.util.item.ICustomVisualItemEquality;
+import com.parzivail.util.item.IDefaultNbtProvider;
 import com.parzivail.util.item.ILeftClickConsumer;
-import com.parzivail.util.math.EntityHitResult;
-import com.parzivail.util.math.MatrixExtUtil;
-import com.parzivail.util.math.QuatUtil;
+import com.parzivail.util.item.IZoomingItem;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.entity.damage.EntityDamageSource;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
+import net.minecraft.item.ItemConvertible;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvent;
 import net.minecraft.util.Hand;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.Pair;
 import net.minecraft.util.TypedActionResult;
-import net.minecraft.util.hit.BlockHitResult;
+import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Matrix4f;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 
-public class BlasterItem extends Item implements ILeftClickConsumer, ICustomVisualItemEquality, IZoomingItem
-{
-	private final float baseDamage;
-	private final float baseRange;
-	private final int baseMaxHeat;
-	private final BlasterCoolingBypassProfile baseCoolingProfile;
-	private final SoundEvent sound;
+import java.util.Map;
 
-	public BlasterItem(BlasterItem.Settings settings)
+public class BlasterItem extends Item implements ILeftClickConsumer, ICustomVisualItemEquality, IZoomingItem, IDefaultNbtProvider
+{
+	public BlasterItem(Settings settings)
 	{
 		super(settings);
-		this.baseDamage = settings.baseDamage;
-		this.baseRange = settings.baseRange;
-		this.baseMaxHeat = settings.baseMaxHeat;
-		this.baseCoolingProfile = settings.baseCoolingProfile;
-		this.sound = settings.sound;
-	}
-
-	public static DamageSource getDamageSource(Entity attacker)
-	{
-		return (new EntityDamageSource("pswg.blaster", attacker)).setProjectile();
 	}
 
 	@Override
@@ -74,20 +62,25 @@ public class BlasterItem extends Item implements ILeftClickConsumer, ICustomVisu
 	public TypedActionResult<ItemStack> useLeft(World world, PlayerEntity player, Hand hand)
 	{
 		final ItemStack stack = player.getStackInHand(hand);
+		BlasterDescriptor bd = new BlasterDescriptor(stack.getOrCreateTag());
 		BlasterTag bt = new BlasterTag(stack.getOrCreateTag());
 
 		if (!bt.isReady())
 			return TypedActionResult.fail(stack);
 
-		if (bt.isCoolingDown())
+		bt.shotTimer = bd.automaticRepeatTime;
+
+		if (bt.isOverheatCooling())
 		{
-			if (world.isClient || !bt.canBypassCooling)
+			if (world.isClient || !bt.canBypassOverheat)
+			{
+				bt.serializeAsSubtag(stack);
 				return TypedActionResult.fail(stack);
+			}
 
-			BlasterCoolingBypassProfile profile = getCoolingProfile(stack, player);
+			BlasterCoolingBypassProfile profile = bd.cooling;
 
-			final int maxHeat = getMaxHeat(stack, player);
-			final float cooldownTime = bt.cooldownTimer / (float)maxHeat;
+			final float cooldownTime = bt.overheatTimer / (float)bd.heat.capacity;
 
 			final float primaryBypassStart = profile.primaryBypassTime - profile.primaryBypassTolerance;
 			final float primaryBypassEnd = profile.primaryBypassTime + profile.primaryBypassTolerance;
@@ -99,21 +92,21 @@ public class BlasterItem extends Item implements ILeftClickConsumer, ICustomVisu
 			if (profile.primaryBypassTolerance > 0 && cooldownTime >= primaryBypassStart && cooldownTime <= primaryBypassEnd)
 			{
 				// TODO: primary bypass sound
-				bt.cooldownTimer = 0;
+				bt.overheatTimer = 0;
 
 				result = TypedActionResult.success(stack);
 			}
 			else if (profile.secondaryBypassTolerance > 0 && cooldownTime >= secondaryBypassStart && cooldownTime <= secondaryBypassEnd)
 			{
 				// TODO: secondary bypass sound
-				bt.cooldownTimer = 0;
+				bt.overheatTimer = 0;
 
 				result = TypedActionResult.success(stack);
 			}
 			else
 			{
 				// TODO: failed bypass sound
-				bt.canBypassCooling = false;
+				bt.canBypassOverheat = false;
 			}
 
 			bt.serializeAsSubtag(stack);
@@ -133,6 +126,8 @@ public class BlasterItem extends Item implements ILeftClickConsumer, ICustomVisu
 					{
 						world.playSound(null, player.getBlockPos(), SwgSounds.Blaster.DRYFIRE, SoundCategory.PLAYERS, 1f, 1f);
 					}
+
+					bt.serializeAsSubtag(stack);
 					return TypedActionResult.fail(stack);
 				}
 				else if (!world.isClient)
@@ -144,66 +139,46 @@ public class BlasterItem extends Item implements ILeftClickConsumer, ICustomVisu
 			}
 		}
 
-		bt.heat += 20;
+		bt.passiveCooldownTimer = bd.heat.passiveCooldownDelay;
+		bt.heat += bd.heat.perRound;
 		bt.shotsRemaining--;
 
-		final int maxHeat = getMaxHeat(stack, player);
-		if (bt.heat > maxHeat)
+		if (bt.heat > bd.heat.capacity)
 		{
 			// TODO: overheat sound
-			bt.cooldownTimer = maxHeat;
-			bt.canBypassCooling = true;
+			bt.overheatTimer = bd.heat.capacity + bd.heat.overheatPenalty;
+			bt.canBypassOverheat = true;
 			bt.heat = 0;
 		}
 
 		if (!world.isClient)
 		{
-			float spread = getSpreadAmount(stack, player);
 			Matrix4f m = new Matrix4f();
-			MatrixExtUtil.loadIdentity(m);
+			Matrix4fAccessUtil.loadIdentity(m);
 
-			MatrixExtUtil.multiply(m, QuatUtil.of(0, -player.yaw, 0, true));
-			MatrixExtUtil.multiply(m, QuatUtil.of(player.pitch, 0, 0, true));
+			Matrix4fAccessUtil.multiply(m, QuatUtil.of(0, -player.yaw, 0, true));
+			Matrix4fAccessUtil.multiply(m, QuatUtil.of(player.pitch, 0, 0, true));
 
-			float hS = (world.random.nextFloat() * 2 - 1) * spread;
-			float vS = (world.random.nextFloat() * 2 - 1) * spread;
+			// TODO
+			float hS = (world.random.nextFloat() * 2 - 1) * bd.spread.horizontal;
+			float vS = (world.random.nextFloat() * 2 - 1) * bd.spread.vertical;
 
 			float hSR = 1; // - bd.getBarrel().getHorizontalSpreadReduction();
 			float vSR = 1; // - bd.getBarrel().getVerticalSpreadReduction();
 
-			MatrixExtUtil.multiply(m, QuatUtil.of(0, hS * hSR, 0, true));
-			MatrixExtUtil.multiply(m, QuatUtil.of(vS * vSR, 0, 0, true));
+			Matrix4fAccessUtil.multiply(m, QuatUtil.of(0, hS * hSR, 0, true));
+			Matrix4fAccessUtil.multiply(m, QuatUtil.of(vS * vSR, 0, 0, true));
 
-			Vec3d look = MathUtil.transform(MathUtil.POSZ, m);
+			Vec3d fromDir = Matrix4fAccessUtil.transform(com.parzivail.util.math.MathUtil.POSZ, m);
+			world.playSound(null, player.getBlockPos(), SwgSounds.getOrDefault(getSound(bd.id), SwgSounds.Blaster.FIRE_A280), SoundCategory.PLAYERS, 1 /* 1 - bd.getBarrel().getNoiseReduction() */, 1 + (float)world.random.nextGaussian() / 10);
 
-			float range = getRange(stack, player);
+			float range = bd.range;
+			float damage = bd.damage;
 
-			final BlasterBoltEntity entity = new BlasterBoltEntity(SwgEntities.Misc.BlasterBolt, player, world);
-			entity.setProperties(player, player.pitch + vS * vSR, player.yaw + hS * hSR, 0.0F, 3.0F, 0);
-			entity.setPos(player.getX(), player.getY() + 1.2f, player.getZ());
-			entity.setRange(range);
-			world.spawnEntity(entity);
-
-			world.playSound(null, player.getBlockPos(), sound, SoundCategory.PLAYERS, 1 /* 1 - bd.getBarrel().getNoiseReduction() */, 1 + (float)world.random.nextGaussian() / 10);
-
-			Vec3d start = new Vec3d(entity.getX(), entity.getY(), entity.getZ());
-
-			EntityHitResult hit = EntityUtil.raycastEntities(start, look, range, player, new Entity[] { player });
-			BlockHitResult blockHit = EntityUtil.raycastBlocks(start, look, range, player);
-
-			double entityDistance = hit == null ? Double.MAX_VALUE : hit.hit.squaredDistanceTo(entity.getPos());
-			double blockDistance = blockHit == null ? Double.MAX_VALUE : blockHit.squaredDistanceTo(entity);
-
-			if (hit != null && entityDistance < blockDistance)
-			{
-				hit.entity.damage(getDamageSource(player), getDamage(stack, player));
-			}
-			else if (blockHit != null)
-			{
-				// TODO: smoke puff
-			}
-
-			bt.shotTimer = 10;
+			BlasterUtil.fireBolt(world, player, fromDir, range, damage, entity -> {
+				entity.setProperties(player, player.pitch + vS * vSR, player.yaw + hS * hSR, 0.0F, 4.0F, 0);
+				entity.setPos(player.getX(), player.getEyeY() - entity.getHeight() / 2f, player.getZ());
+			});
 
 			bt.serializeAsSubtag(stack);
 		}
@@ -211,29 +186,54 @@ public class BlasterItem extends Item implements ILeftClickConsumer, ICustomVisu
 		return TypedActionResult.success(stack);
 	}
 
-	private float getSpreadAmount(ItemStack stack, PlayerEntity player)
+	private Identifier getSound(Identifier id)
 	{
-		return 0;
+		return new Identifier(id.getNamespace(), "blaster.fire." + id.getPath());
 	}
 
-	public int getMaxHeat(ItemStack stack, PlayerEntity player)
+	@Override
+	public String getTranslationKey(ItemStack stack)
 	{
-		return baseMaxHeat;
+		BlasterDescriptor bd = new BlasterDescriptor(stack.getOrCreateTag());
+		return "item." + bd.id.getNamespace() + ".blaster_" + bd.id.getPath();
 	}
 
-	public float getDamage(ItemStack stack, PlayerEntity player)
+	@Override
+	public CompoundTag getDefaultTag(ItemConvertible item, int count)
 	{
-		return baseDamage;
+		BlasterDescriptor d = new BlasterDescriptor(
+				Resources.identifier("a280"),
+				10,
+				50,
+				1,
+				0xFF0000,
+				10,
+				10,
+				new BlasterSpreadInfo(0, 0),
+				new BlasterHeatInfo(100, 15, 30, 15),
+				BlasterCoolingBypassProfile.DEFAULT
+		);
+
+		return d.toSubtag();
 	}
 
-	public float getRange(ItemStack stack, PlayerEntity player)
+	@Override
+	public void appendStacks(ItemGroup group, DefaultedList<ItemStack> stacks)
 	{
-		return baseRange;
+		if (group != Galaxies.Tab)
+			return;
+
+		SwgBlasterManager blasterLoader = Client.getBlasterLoader();
+
+		for (Map.Entry<Identifier, BlasterDescriptor> entry : blasterLoader.getBlasters().entrySet())
+			stacks.add(forType(entry.getValue()));
 	}
 
-	public BlasterCoolingBypassProfile getCoolingProfile(ItemStack stack, PlayerEntity player)
+	private ItemStack forType(BlasterDescriptor blasterDescriptor)
 	{
-		return baseCoolingProfile;
+		ItemStack stack = new ItemStack(this);
+		blasterDescriptor.serializeAsSubtag(stack);
+		return stack;
 	}
 
 	private Pair<Integer, BlasterPowerPack> getAnotherPack(PlayerEntity player)
@@ -259,7 +259,9 @@ public class BlasterItem extends Item implements ILeftClickConsumer, ICustomVisu
 	@Override
 	public boolean areStacksVisuallyEqual(ItemStack original, ItemStack updated)
 	{
-		return true;
+		BlasterDescriptor bdOriginal = new BlasterDescriptor(original.getOrCreateTag());
+		BlasterDescriptor bdUpdated = new BlasterDescriptor(updated.getOrCreateTag());
+		return bdOriginal.id.equals(bdUpdated.id);
 	}
 
 	@Override
@@ -271,58 +273,5 @@ public class BlasterItem extends Item implements ILeftClickConsumer, ICustomVisu
 			return 0.2f;
 
 		return 1;
-	}
-
-	public static class Settings extends Item.Settings
-	{
-		private float baseDamage = 1;
-		private float baseRange = 1;
-		private int baseMaxHeat = 100;
-		private BlasterCoolingBypassProfile baseCoolingProfile = BlasterCoolingBypassProfile.STANDARD;
-		private SoundEvent sound = SwgSounds.Blaster.FIRE_DL44;
-
-		public Settings baseDamage(float damage)
-		{
-			this.baseDamage = damage;
-			return this;
-		}
-
-		public Settings baseRange(float range)
-		{
-			this.baseRange = range;
-			return this;
-		}
-
-		public Settings baseMaxHeat(int heat)
-		{
-			this.baseMaxHeat = heat;
-			return this;
-		}
-
-		public Settings baseCoolingProfile(BlasterCoolingBypassProfile profile)
-		{
-			this.baseCoolingProfile = profile;
-			return this;
-		}
-
-		public Settings sound(SoundEvent sound)
-		{
-			this.sound = sound;
-			return this;
-		}
-
-		@Override
-		public Settings maxCount(int maxCount)
-		{
-			super.maxCount(maxCount);
-			return this;
-		}
-
-		@Override
-		public Settings group(ItemGroup group)
-		{
-			super.group(group);
-			return this;
-		}
 	}
 }

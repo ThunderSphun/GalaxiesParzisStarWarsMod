@@ -3,10 +3,10 @@ package com.parzivail.pswg.client.screen;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.parzivail.pswg.Client;
 import com.parzivail.pswg.Resources;
-import com.parzivail.pswg.client.item.render.LightsaberItemRenderer;
+import com.parzivail.pswg.client.render.item.LightsaberItemRenderer;
 import com.parzivail.pswg.container.SwgPackets;
 import com.parzivail.pswg.item.lightsaber.LightsaberItem;
-import com.parzivail.pswg.item.lightsaber.LightsaberTag;
+import com.parzivail.pswg.item.lightsaber.data.LightsaberTag;
 import com.parzivail.pswg.screen.LightsaberForgeScreenHandler;
 import com.parzivail.util.client.ColorUtil;
 import io.netty.buffer.Unpooled;
@@ -32,8 +32,6 @@ import net.minecraft.util.Identifier;
 import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.util.math.Quaternion;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -106,13 +104,10 @@ public class LightsaberForgeScreen extends HandledScreen<LightsaberForgeScreenHa
 
 	private static final Identifier TEXTURE = Resources.identifier("textures/gui/container/lightsaber_forge.png");
 
-	private final List<SliderWidget> sliders = new ArrayList<>();
-
 	private MutableSlider sR;
 	private MutableSlider sG;
 	private MutableSlider sB;
 	private MutableCheckbox cbUnstable;
-	private MutableCheckbox cbDarkBlendMode;
 	private ButtonWidget bBladeColor;
 	private ButtonWidget bCoreColor;
 
@@ -136,20 +131,18 @@ public class LightsaberForgeScreen extends HandledScreen<LightsaberForgeScreenHa
 		this.playerInventoryTitleX = 48;
 		this.playerInventoryTitleY = this.backgroundHeight - 94;
 		this.titleX = (this.backgroundWidth - this.textRenderer.getWidth(this.title)) / 2;
-		this.handler.addListener(this);
 
 		Function<Double, String> valueFormatter = value -> String.format("%s", (int)Math.round(value * 255));
 
-		sliders.clear();
-		sliders.add(sR = new MutableSlider(x + 41, y + 59, 100, 20, "R: %s", r / 255f, valueFormatter, slider -> {
+		this.addButton(sR = new MutableSlider(x + 41, y + 59, 100, 20, "R: %s", r / 255f, valueFormatter, slider -> {
 			r = (int)Math.round(slider.getValue() * 255);
 			commitChanges();
 		}));
-		sliders.add(sG = new MutableSlider(x + 41, y + 79, 100, 20, "G: %s", g / 255f, valueFormatter, slider -> {
+		this.addButton(sG = new MutableSlider(x + 41, y + 79, 100, 20, "G: %s", g / 255f, valueFormatter, slider -> {
 			g = (int)Math.round(slider.getValue() * 255);
 			commitChanges();
 		}));
-		sliders.add(sB = new MutableSlider(x + 41, y + 99, 100, 20, "B: %s", b / 255f, valueFormatter, slider -> {
+		this.addButton(sB = new MutableSlider(x + 41, y + 99, 100, 20, "B: %s", b / 255f, valueFormatter, slider -> {
 			b = (int)Math.round(slider.getValue() * 255);
 			commitChanges();
 		}));
@@ -177,14 +170,8 @@ public class LightsaberForgeScreen extends HandledScreen<LightsaberForgeScreenHa
 		this.addButton(cbUnstable = new MutableCheckbox(x + 173, y + 65, 20, 20, new TranslatableText("Unstable"), false, true, mutableCheckbox -> {
 			commitChanges();
 		}));
-		this.addButton(cbDarkBlendMode = new MutableCheckbox(x + 173, y + 87, 20, 20, new TranslatableText("Dark"), false, true, mutableCheckbox -> {
-			commitChanges();
-		}));
 
-		for (SliderWidget s : sliders)
-			this.addButton(s);
-
-		onLightsaberChanged();
+		this.handler.addListener(this);
 	}
 
 	public void removed()
@@ -196,11 +183,10 @@ public class LightsaberForgeScreen extends HandledScreen<LightsaberForgeScreenHa
 	@Override
 	public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY)
 	{
-		// functional programming hell yeah
-		return sliders.stream().anyMatch(
-				widget -> widget.isMouseOver(mouseX, mouseY) &&
-				          widget.mouseDragged(mouseX, mouseY, button, deltaX, deltaY)
-		) || super.mouseDragged(mouseX, mouseY, button, deltaX, deltaY);
+		if (this.getFocused() != null && this.isDragging() && button == 0 && this.getFocused().mouseDragged(mouseX, mouseY, button, deltaX, deltaY))
+			return true;
+
+		return super.mouseDragged(mouseX, mouseY, button, deltaX, deltaY);
 	}
 
 	private void commitChanges()
@@ -213,7 +199,6 @@ public class LightsaberForgeScreen extends HandledScreen<LightsaberForgeScreenHa
 				lt.coreColor = ColorUtil.packRgb(r, g, b);
 
 			lt.unstable = cbUnstable.isChecked();
-			lt.darkBlend = cbDarkBlendMode.isChecked();
 		});
 	}
 
@@ -234,13 +219,20 @@ public class LightsaberForgeScreen extends HandledScreen<LightsaberForgeScreenHa
 			g = (color & 0xFF00) >> 8;
 			b = (color & 0xFF);
 
-			sR.setValue(r / 255f);
-			sG.setValue(g / 255f);
-			sB.setValue(b / 255f);
-
 			cbUnstable.setChecked(lt.unstable);
-			cbDarkBlendMode.setChecked(lt.darkBlend);
 		}
+		else
+		{
+			r = 0;
+			g = 0;
+			b = 0;
+
+			cbUnstable.setChecked(false);
+		}
+
+		sR.setValue(r / 255f);
+		sG.setValue(g / 255f);
+		sB.setValue(b / 255f);
 	}
 
 	private LightsaberTag getLightsaberTag()
@@ -343,6 +335,6 @@ public class LightsaberForgeScreen extends HandledScreen<LightsaberForgeScreenHa
 	protected void drawForeground(MatrixStack matrices, int mouseX, int mouseY)
 	{
 		this.textRenderer.draw(matrices, this.title, (float)this.titleX, (float)this.titleY, 4210752);
-		this.textRenderer.draw(matrices, this.playerInventory.getDisplayName(), (float)this.playerInventoryTitleX, (float)this.playerInventoryTitleY, 4210752);
+		this.textRenderer.draw(matrices, this.playerInventory.getDisplayName(), (float)this.playerInventoryTitleX, (float)this.playerInventoryTitleY, 0x404040);
 	}
 }

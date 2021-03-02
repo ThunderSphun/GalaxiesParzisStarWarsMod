@@ -1,8 +1,9 @@
 package com.parzivail.pswg.client.input;
 
 import com.parzivail.pswg.Client;
+import com.parzivail.pswg.client.screen.SpeciesSelectScreen;
 import com.parzivail.pswg.container.SwgPackets;
-import com.parzivail.pswg.entity.ShipEntity;
+import com.parzivail.pswg.entity.ship.ShipEntity;
 import io.netty.buffer.Unpooled;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.MinecraftClient;
@@ -17,7 +18,12 @@ public class KeyHandler
 		if (mc.player == null)
 			return;
 
-		if (Client.KEY_LIGHTSABER_TOGGLE.isPressed())
+		if (Client.KEY_SPECIES_SELECT.wasPressed())
+		{
+			Client.minecraft.openScreen(new SpeciesSelectScreen(Client.minecraft.currentScreen));
+		}
+
+		if (Client.KEY_LIGHTSABER_TOGGLE.wasPressed())
 		{
 			ClientPlayNetworking.send(SwgPackets.C2S.PacketPlayerLightsaberToggle, new PacketByteBuf(Unpooled.buffer()));
 		}

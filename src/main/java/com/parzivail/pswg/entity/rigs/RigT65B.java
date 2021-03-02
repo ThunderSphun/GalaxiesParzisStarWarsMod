@@ -1,11 +1,11 @@
 package com.parzivail.pswg.entity.rigs;
 
 import com.parzivail.pswg.Resources;
-import com.parzivail.pswg.client.pr3r.PR3RFile;
+import com.parzivail.pswg.access.util.Matrix4fAccessUtil;
 import com.parzivail.pswg.entity.ship.T65BXwing;
 import com.parzivail.pswg.rig.IModelRig;
-import com.parzivail.pswg.util.MathUtil;
-import com.parzivail.util.math.QuatUtil;
+import com.parzivail.pswg.rig.pr3r.PR3RFile;
+import com.parzivail.pswg.util.QuatUtil;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.util.math.MatrixStack;
@@ -100,6 +100,9 @@ public class RigT65B implements IModelRig<T65BXwing, RigT65B.Part>
 	public Vec3d getWorldPosition(MatrixStack stack, T65BXwing target, RigT65B.Part part, Vec3d localPosition)
 	{
 		stack.push();
+
+		stack.multiply(target.getRotation());
+
 		MatrixStack.Entry entry = stack.peek();
 		Matrix4f parent = entry.getModel();
 		Matrix4f rig = RIG.objects.get(part.getPartName());
@@ -107,9 +110,7 @@ public class RigT65B implements IModelRig<T65BXwing, RigT65B.Part>
 
 		transform(stack, target, part);
 
-		parent.multiply(target.getRotation());
-
-		Vec3d vec = MathUtil.transform(localPosition, parent);
+		Vec3d vec = Matrix4fAccessUtil.transform(localPosition, parent);
 		stack.pop();
 
 		return vec;
@@ -144,7 +145,7 @@ public class RigT65B implements IModelRig<T65BXwing, RigT65B.Part>
 
 		parent.multiply(target.getRotation());
 
-		Vec3d vec = MathUtil.transform(localPosition, parent);
+		Vec3d vec = Matrix4fAccessUtil.transform(localPosition, parent);
 		stack.pop();
 
 		return vec;
