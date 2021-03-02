@@ -17,6 +17,7 @@ public abstract class RotatingBlockWithEntity extends RotatingBlock implements B
 		super(settings);
 	}
 
+	@SuppressWarnings("deprecation")
 	public boolean onSyncedBlockEvent(BlockState state, World world, BlockPos pos, int type, int data)
 	{
 		super.onSyncedBlockEvent(state, world, pos, type, data);
@@ -24,6 +25,7 @@ public abstract class RotatingBlockWithEntity extends RotatingBlock implements B
 		return blockEntity != null && blockEntity.onSyncedBlockEvent(type, data);
 	}
 
+	@SuppressWarnings("deprecation")
 	@Nullable
 	public NamedScreenHandlerFactory createScreenHandlerFactory(BlockState state, World world, BlockPos pos)
 	{

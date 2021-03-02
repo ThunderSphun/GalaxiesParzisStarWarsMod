@@ -4,55 +4,50 @@ import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.item.ItemPlacementContext;
 import net.minecraft.state.StateManager;
-import net.minecraft.state.property.IntProperty;
+import net.minecraft.state.property.DirectionProperty;
 import net.minecraft.state.property.Properties;
 import net.minecraft.util.BlockMirror;
 import net.minecraft.util.BlockRotation;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.Direction;
 
 public class RotatingBlock extends Block
 {
+	public static final DirectionProperty FACING;
+
 	static
 	{
-		ROTATION = Properties.ROTATION;
+		FACING = Properties.HORIZONTAL_FACING;
 	}
-
-	public static final IntProperty ROTATION;
-	protected final int divisions;
 
 	public RotatingBlock(Settings settings)
 	{
 		super(settings);
-		this.divisions = 4;
-	}
-
-	public float getRotationDegrees(BlockState state)
-	{
-		if (!state.contains(ROTATION))
-			return 0;
-
-		int rotationIdx = state.get(ROTATION);
-
-		return -rotationIdx * (360f / divisions);
 	}
 
 	public BlockState getPlacementState(ItemPlacementContext ctx)
 	{
-		return this.getDefaultState().with(ROTATION, MathHelper.floor((double)((ctx.getPlayerYaw() - 90) * divisions / 360.0F) + 0.5D) & (divisions - 1));
+		return this.getDefaultState().with(FACING, ctx.getPlayerFacing());
 	}
 
+	@SuppressWarnings("deprecation")
 	public BlockState rotate(BlockState state, BlockRotation rotation)
 	{
-		return state.with(ROTATION, rotation.rotate(state.get(ROTATION), 8));
+		return state.with(FACING, state.get(FACING).rotateYClockwise());
 	}
 
+	@SuppressWarnings("deprecation")
 	public BlockState mirror(BlockState state, BlockMirror mirror)
 	{
-		return state.with(ROTATION, mirror.mirror(state.get(ROTATION), 8));
+		return state.with(FACING, state.get(FACING).getOpposite());
 	}
 
 	protected void appendProperties(StateManager.Builder<Block, BlockState> builder)
 	{
-		builder.add(ROTATION);
+		builder.add(FACING);
+	}
+
+	public float getRotationDegrees(BlockState state)
+	{
+		return state.get(FACING).asRotation();
 	}
 }

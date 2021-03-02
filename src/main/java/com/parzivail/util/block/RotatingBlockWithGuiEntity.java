@@ -28,6 +28,7 @@ public class RotatingBlockWithGuiEntity extends RotatingBlockWithEntity
 		return blockEntitySupplier.get();
 	}
 
+	@SuppressWarnings("deprecation")
 	public ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockHitResult hit)
 	{
 		if (world.isClient)

@@ -16,9 +16,10 @@ public class RotatingBlockWithBounds extends RotatingBlock
 		this.shape = shape;
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public VoxelShape getOutlineShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context)
 	{
-		return VoxelShapeUtil.rotate(shape, state.get(ROTATION) % 4);
+		return VoxelShapeUtil.rotate(shape, (int) state.get(FACING).asRotation() / 90);
 	}
 }

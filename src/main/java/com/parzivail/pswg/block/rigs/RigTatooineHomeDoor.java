@@ -64,7 +64,7 @@ public class RigTatooineHomeDoor implements IModelRig<TatooineHomeDoorBlockEntit
 		World world = target.getWorld();
 		BlockPos pos = target.getPos();
 		BlockState block = world.getBlockState(pos);
-		stack.multiply(new Quaternion(0, (block.get(BlockTatooineHomeDoor.ROTATION) - 1) * -90, 0, true));
+		stack.multiply(new Quaternion(0, block.get(BlockTatooineHomeDoor.FACING).asRotation(), 0, true));
 
 		stack.multiply(new Quaternion(-90, 0, 0, true));
 

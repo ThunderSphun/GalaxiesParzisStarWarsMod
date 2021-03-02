@@ -19,7 +19,7 @@ public class TatooineHomeDoorBlockEntity extends BlockEntity implements Tickable
 	private static final byte MASK_DIRECTION = (byte)0b01000000;
 	private static final byte MASK_POWERED = (byte)0b00100000;
 	private static final byte MASK_TIMER = (byte)0b00011111;
-	private byte timer = 0;
+	private byte timer = 64;
 
 	public TatooineHomeDoorBlockEntity()
 	{
