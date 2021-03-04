@@ -39,8 +39,18 @@ public class Rotating3WideBlockWithGuiEntity extends RotatingBlockWithGuiEntity
 	@Override
 	public ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockHitResult hit)
 	{
-		return super.onUse(state, world, pos, player, hand, hit);
-		// TODO: make all blocks access same inventory
+		if (world.isClient)
+			return ActionResult.SUCCESS;
+		else
+		{
+			Side side = state.get(SIDE);
+			Direction dir = state.get(FACING);
+
+			BlockPos centerBlock = pos.offset(dir.rotateYClockwise(), side.getOffset(Side.MIDDLE));
+			BlockState centerState = world.getBlockState(centerBlock);
+			player.openHandledScreen(centerState.createScreenHandlerFactory(world, centerBlock));
+			return ActionResult.CONSUME;
+		}
 	}
 
 	@Override
