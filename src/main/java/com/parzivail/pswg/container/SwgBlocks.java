@@ -24,36 +24,6 @@ import java.util.Random;
 
 public class SwgBlocks
 {
-	public static void register()
-	{
-		RegistryHelper.registerAnnotatedFields(SwgBlocks.class, Block.class, SwgBlocks::registerBlock);
-		RegistryHelper.registerAnnotatedFields(SwgBlocks.class, BlockEntityType.class, SwgBlocks::registerBlockEntityType);
-
-		FlammableBlockRegistry.getDefaultInstance().add(SwgBlocks.Leaves.Sequoia, 30, 60);
-
-		Registry.register(Registry.BLOCK, Resources.identifier("orange_kyber_crate"), Crate.OrangeKyber);
-		Registry.register(Registry.BLOCK, Resources.identifier("gray_kyber_crate"), Crate.GrayKyber);
-		Registry.register(Registry.BLOCK, Resources.identifier("black_kyber_crate"), Crate.BlackKyber);
-		Registry.register(Registry.ITEM, Resources.identifier("orange_kyber_crate"), new Rotating3WideBlockWithGuiEntity.Item(Crate.OrangeKyber, new Item.Settings().group(Galaxies.Tab)));
-		Registry.register(Registry.ITEM, Resources.identifier("gray_kyber_crate"), new Rotating3WideBlockWithGuiEntity.Item(Crate.GrayKyber, new Item.Settings().group(Galaxies.Tab)));
-		Registry.register(Registry.ITEM, Resources.identifier("black_kyber_crate"), new Rotating3WideBlockWithGuiEntity.Item(Crate.BlackKyber, new Item.Settings().group(Galaxies.Tab)));
-
-		Registry.register(Registry.BLOCK, Resources.identifier("tatooine_home_door_controller"), Door.TatooineHomeController);
-		Registry.register(Registry.BLOCK, Resources.identifier("tatooine_home_door"), Door.TatooineHomeFiller);
-		Registry.register(Registry.ITEM, Resources.identifier("tatooine_home_door"), new BlockTatooineHomeDoor.Item(Door.TatooineHomeController, new Item.Settings().group(Galaxies.Tab)));
-	}
-
-	public static void registerBlock(Block block, Identifier identifier)
-	{
-		Registry.register(Registry.BLOCK, identifier, block);
-		Registry.register(Registry.ITEM, identifier, new BlockItem(block, new Item.Settings().group(Galaxies.Tab)));
-	}
-
-	public static void registerBlockEntityType(BlockEntityType<?> blockEntityType, Identifier identifier)
-	{
-		Registry.register(Registry.BLOCK_ENTITY_TYPE, identifier, blockEntityType);
-	}
-
 	public static class Barrel
 	{
 		@RegistryName("desh_barrel")
@@ -344,7 +314,6 @@ public class SwgBlocks
 		//@RegistryName("chiseled_massassi_stone_bricks")
 		//public static final Block MassassiChiseledBricks = new Block(FabricBlockSettings.of(Material.STONE).strength(1.5F).breakByTool(FabricToolTags.PICKAXES, 0).requiresTool());
 
-
 		@RegistryName("ilum_stone")
 		public static final Block Ilum = new Block(FabricBlockSettings.of(Material.STONE).strength(1.5F).breakByTool(FabricToolTags.PICKAXES, 0).requiresTool());
 		@RegistryName("ilum_stone_stairs")
@@ -363,5 +332,35 @@ public class SwgBlocks
 		public static final Block IlumBrickSlab = new SlabBlock(AbstractBlock.Settings.copy(IlumBricks));
 		@RegistryName("chiseled_ilum_stone_bricks")
 		public static final Block IlumChiseledBricks = new Block(FabricBlockSettings.of(Material.STONE).strength(1.5F).breakByTool(FabricToolTags.PICKAXES, 0).requiresTool());
+	}
+
+	public static void register()
+	{
+		RegistryHelper.registerAnnotatedFields(SwgBlocks.class, Block.class, SwgBlocks::registerBlock);
+		RegistryHelper.registerAnnotatedFields(SwgBlocks.class, BlockEntityType.class, SwgBlocks::registerBlockEntityType);
+
+		FlammableBlockRegistry.getDefaultInstance().add(SwgBlocks.Leaves.Sequoia, 30, 60);
+
+		Registry.register(Registry.BLOCK, Resources.identifier("orange_kyber_crate"), Crate.OrangeKyber);
+		Registry.register(Registry.BLOCK, Resources.identifier("gray_kyber_crate"), Crate.GrayKyber);
+		Registry.register(Registry.BLOCK, Resources.identifier("black_kyber_crate"), Crate.BlackKyber);
+		Registry.register(Registry.ITEM, Resources.identifier("orange_kyber_crate"), new Rotating3WideBlockWithGuiEntity.Item(Crate.OrangeKyber, new Item.Settings().group(Galaxies.Tab)));
+		Registry.register(Registry.ITEM, Resources.identifier("gray_kyber_crate"), new Rotating3WideBlockWithGuiEntity.Item(Crate.GrayKyber, new Item.Settings().group(Galaxies.Tab)));
+		Registry.register(Registry.ITEM, Resources.identifier("black_kyber_crate"), new Rotating3WideBlockWithGuiEntity.Item(Crate.BlackKyber, new Item.Settings().group(Galaxies.Tab)));
+
+		Registry.register(Registry.BLOCK, Resources.identifier("tatooine_home_door_controller"), Door.TatooineHomeController);
+		Registry.register(Registry.BLOCK, Resources.identifier("tatooine_home_door"), Door.TatooineHomeFiller);
+		Registry.register(Registry.ITEM, Resources.identifier("tatooine_home_door"), new BlockTatooineHomeDoor.Item(Door.TatooineHomeController, new Item.Settings().group(Galaxies.Tab)));
+	}
+
+	public static void registerBlock(Block block, Identifier identifier)
+	{
+		Registry.register(Registry.BLOCK, identifier, block);
+		Registry.register(Registry.ITEM, identifier, new BlockItem(block, new Item.Settings().group(Galaxies.Tab)));
+	}
+
+	public static void registerBlockEntityType(BlockEntityType<?> blockEntityType, Identifier identifier)
+	{
+		Registry.register(Registry.BLOCK_ENTITY_TYPE, identifier, blockEntityType);
 	}
 }
