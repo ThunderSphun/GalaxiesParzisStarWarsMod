@@ -15,7 +15,7 @@ public class BlockGenerator
 	public static BlockGenerator basic(Block block)
 	{
 		return block(block)
-				.lootTable(LootTableFile::basic);
+				.lootTable(LootTableFile::singleSelf);
 	}
 
 	public static BlockGenerator blockNoModel(Block block)
@@ -26,7 +26,7 @@ public class BlockGenerator
 	public static BlockGenerator blockNoModelDefaultDrops(Block block)
 	{
 		return blockNoModel(block)
-				.lootTable(LootTableFile::basic);
+				.lootTable(LootTableFile::singleSelf);
 	}
 
 	public static BlockGenerator block(Block block)
@@ -78,11 +78,18 @@ public class BlockGenerator
 
 	static BlockGenerator slab(Block block, Identifier fullSlabModel, Identifier topTexture, Identifier sideTexture)
 	{
-		Identifier id = AssetGenerator.getRegistryName(block);
-		Identifier top = IdentifierUtil.concat("block/", id, "_top");
+		Identifier top = IdentifierUtil.concat(AssetGenerator.getTextureName(block), "_top");
 		return basic(block)
 				.state((b, modelId) -> BlockStateGenerator.slab(block, AssetGenerator.getTextureName(block), top, fullSlabModel))
 				.models(b -> ModelFile.slab(b, topTexture, sideTexture));
+	}
+
+	static BlockGenerator slabUniqueDouble(Block block, Identifier fullSlabModel, Identifier topTexture, Identifier sideTexture)
+	{
+		Identifier top = IdentifierUtil.concat(AssetGenerator.getTextureName(block), "_top");
+		return basic(block)
+				.state((b, modelId) -> BlockStateGenerator.slab(block, AssetGenerator.getTextureName(block), top, fullSlabModel))
+				.models(b -> ModelFile.slabUniqueDouble(b, topTexture, sideTexture));
 	}
 
 	static BlockGenerator slab(Block block, Identifier model)
