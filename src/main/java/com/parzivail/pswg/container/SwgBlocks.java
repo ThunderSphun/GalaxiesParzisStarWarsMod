@@ -31,12 +31,12 @@ public class SwgBlocks
 
 		FlammableBlockRegistry.getDefaultInstance().add(SwgBlocks.Leaves.Sequoia, 30, 60);
 
-		Registry.register(Registry.BLOCK, Resources.identifier("orange_kyber_crate"), Crate.OctagonOrange);
-		Registry.register(Registry.BLOCK, Resources.identifier("gray_kyber_crate"), Crate.OctagonGray);
-		Registry.register(Registry.BLOCK, Resources.identifier("black_kyber_crate"), Crate.OctagonBlack);
-		Registry.register(Registry.ITEM, Resources.identifier("orange_kyber_crate"), new Rotating3WideBlockWithGuiEntity.Item(Crate.OctagonOrange, new Item.Settings().group(Galaxies.Tab)));
-		Registry.register(Registry.ITEM, Resources.identifier("gray_kyber_crate"), new Rotating3WideBlockWithGuiEntity.Item(Crate.OctagonGray, new Item.Settings().group(Galaxies.Tab)));
-		Registry.register(Registry.ITEM, Resources.identifier("black_kyber_crate"), new Rotating3WideBlockWithGuiEntity.Item(Crate.OctagonBlack, new Item.Settings().group(Galaxies.Tab)));
+		Registry.register(Registry.BLOCK, Resources.identifier("orange_kyber_crate"), Crate.OrangeKyber);
+		Registry.register(Registry.BLOCK, Resources.identifier("gray_kyber_crate"), Crate.GrayKyber);
+		Registry.register(Registry.BLOCK, Resources.identifier("black_kyber_crate"), Crate.BlackKyber);
+		Registry.register(Registry.ITEM, Resources.identifier("orange_kyber_crate"), new Rotating3WideBlockWithGuiEntity.Item(Crate.OrangeKyber, new Item.Settings().group(Galaxies.Tab)));
+		Registry.register(Registry.ITEM, Resources.identifier("gray_kyber_crate"), new Rotating3WideBlockWithGuiEntity.Item(Crate.GrayKyber, new Item.Settings().group(Galaxies.Tab)));
+		Registry.register(Registry.ITEM, Resources.identifier("black_kyber_crate"), new Rotating3WideBlockWithGuiEntity.Item(Crate.BlackKyber, new Item.Settings().group(Galaxies.Tab)));
 
 		Registry.register(Registry.BLOCK, Resources.identifier("tatooine_home_door_controller"), Door.TatooineHomeController);
 		Registry.register(Registry.BLOCK, Resources.identifier("tatooine_home_door"), Door.TatooineHomeFiller);
@@ -71,20 +71,20 @@ public class SwgBlocks
 
 	public static class Crate
 	{
-		public static final Rotating3WideBlockWithGuiEntity OctagonOrange = new Rotating3WideBlockWithGuiEntity(FabricBlockSettings.of(Material.METAL).sounds(BlockSoundGroup.METAL).nonOpaque().strength(2.5F).breakByTool(FabricToolTags.PICKAXES, 0), CrateOctagonBlockEntity::new);
-		public static final Rotating3WideBlockWithGuiEntity OctagonGray = new Rotating3WideBlockWithGuiEntity(FabricBlockSettings.of(Material.METAL).sounds(BlockSoundGroup.METAL).nonOpaque().strength(2.5F).breakByTool(FabricToolTags.PICKAXES, 0), CrateOctagonBlockEntity::new);
-		public static final Rotating3WideBlockWithGuiEntity OctagonBlack = new Rotating3WideBlockWithGuiEntity(FabricBlockSettings.of(Material.METAL).sounds(BlockSoundGroup.METAL).nonOpaque().strength(2.5F).breakByTool(FabricToolTags.PICKAXES, 0), CrateOctagonBlockEntity::new);
+		public static final Rotating3WideBlockWithGuiEntity OrangeKyber = new Rotating3WideBlockWithGuiEntity(FabricBlockSettings.of(Material.METAL).sounds(BlockSoundGroup.METAL).nonOpaque().strength(2.5F).breakByTool(FabricToolTags.PICKAXES, 0), CrateOctagonBlockEntity::new);
+		public static final Rotating3WideBlockWithGuiEntity GrayKyber = new Rotating3WideBlockWithGuiEntity(FabricBlockSettings.of(Material.METAL).sounds(BlockSoundGroup.METAL).nonOpaque().strength(2.5F).breakByTool(FabricToolTags.PICKAXES, 0), CrateOctagonBlockEntity::new);
+		public static final Rotating3WideBlockWithGuiEntity BlackKyber = new Rotating3WideBlockWithGuiEntity(FabricBlockSettings.of(Material.METAL).sounds(BlockSoundGroup.METAL).nonOpaque().strength(2.5F).breakByTool(FabricToolTags.PICKAXES, 0), CrateOctagonBlockEntity::new);
 		@RegistryName("toolbox")
-		public static final RotatingBlockWithGuiEntity MosEisley = new RotatingBlockWithGuiEntity(FabricBlockSettings.of(Material.METAL).sounds(BlockSoundGroup.METAL).nonOpaque().strength(2.5F).breakByTool(FabricToolTags.PICKAXES, 0), CrateMosEisleyBlockEntity::new);
+		public static final RotatingBlockWithGuiEntity Toolbox = new RotatingBlockWithGuiEntity(FabricBlockSettings.of(Material.METAL).sounds(BlockSoundGroup.METAL).nonOpaque().strength(2.5F).breakByTool(FabricToolTags.PICKAXES, 0), CrateMosEisleyBlockEntity::new);
 		@RegistryName("imperial_crate")
-		public static final RotatingBlockWithGuiEntity ImperialCube = new RotatingBlockWithGuiEntity(FabricBlockSettings.of(Material.METAL).sounds(BlockSoundGroup.METAL).nonOpaque().strength(2.5F).breakByTool(FabricToolTags.PICKAXES, 0), CrateImperialCubeBlockEntity::new);
+		public static final RotatingBlockWithGuiEntity Imperial = new RotatingBlockWithGuiEntity(FabricBlockSettings.of(Material.METAL).sounds(BlockSoundGroup.METAL).nonOpaque().strength(2.5F).breakByTool(FabricToolTags.PICKAXES, 0), CrateImperialCubeBlockEntity::new);
 
 		@RegistryName("kyber_crate")
-		public static final BlockEntityType<CrateOctagonBlockEntity> OctagonBlockEntityType = BlockEntityType.Builder.create(CrateOctagonBlockEntity::new, OctagonOrange, OctagonGray, OctagonBlack).build(null);
+		public static final BlockEntityType<CrateOctagonBlockEntity> KyberCrateBlockEntityType = BlockEntityType.Builder.create(CrateOctagonBlockEntity::new, OrangeKyber, GrayKyber, BlackKyber).build(null);
 		@RegistryName("toolbox")
-		public static final BlockEntityType<CrateMosEisleyBlockEntity> MosEisleyBlockEntityType = BlockEntityType.Builder.create(CrateMosEisleyBlockEntity::new, MosEisley).build(null);
+		public static final BlockEntityType<CrateMosEisleyBlockEntity> ToolboxBlockEntityType = BlockEntityType.Builder.create(CrateMosEisleyBlockEntity::new, Toolbox).build(null);
 		@RegistryName("imperial_crate")
-		public static final BlockEntityType<CrateImperialCubeBlockEntity> ImperialCubeBlockEntityType = BlockEntityType.Builder.create(CrateImperialCubeBlockEntity::new, ImperialCube).build(null);
+		public static final BlockEntityType<CrateImperialCubeBlockEntity> ImperialCrateBlockEntityType = BlockEntityType.Builder.create(CrateImperialCubeBlockEntity::new, Imperial).build(null);
 	}
 
 	public static class Door
