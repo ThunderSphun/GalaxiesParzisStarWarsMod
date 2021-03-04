@@ -14,7 +14,6 @@ import net.minecraft.block.*;
 import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
-import net.minecraft.item.PickaxeItem;
 import net.minecraft.sound.BlockSoundGroup;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.Direction;
@@ -25,6 +24,36 @@ import java.util.Random;
 
 public class SwgBlocks
 {
+	public static void register()
+	{
+		RegistryHelper.registerAnnotatedFields(SwgBlocks.class, Block.class, SwgBlocks::registerBlock);
+		RegistryHelper.registerAnnotatedFields(SwgBlocks.class, BlockEntityType.class, SwgBlocks::registerBlockEntityType);
+
+		FlammableBlockRegistry.getDefaultInstance().add(SwgBlocks.Leaves.Sequoia, 30, 60);
+
+		Registry.register(Registry.BLOCK, Resources.identifier("orange_kyber_crate"), Crate.OctagonOrange);
+		Registry.register(Registry.BLOCK, Resources.identifier("gray_kyber_crate"), Crate.OctagonGray);
+		Registry.register(Registry.BLOCK, Resources.identifier("black_kyber_crate"), Crate.OctagonBlack);
+		Registry.register(Registry.ITEM, Resources.identifier("orange_kyber_crate"), new Rotating3WideBlockWithGuiEntity.Item(Crate.OctagonOrange, new Item.Settings().group(Galaxies.Tab)));
+		Registry.register(Registry.ITEM, Resources.identifier("gray_kyber_crate"), new Rotating3WideBlockWithGuiEntity.Item(Crate.OctagonGray, new Item.Settings().group(Galaxies.Tab)));
+		Registry.register(Registry.ITEM, Resources.identifier("black_kyber_crate"), new Rotating3WideBlockWithGuiEntity.Item(Crate.OctagonBlack, new Item.Settings().group(Galaxies.Tab)));
+
+		Registry.register(Registry.BLOCK, Resources.identifier("tatooine_home_door_controller"), Door.TatooineHomeController);
+		Registry.register(Registry.BLOCK, Resources.identifier("tatooine_home_door"), Door.TatooineHomeFiller);
+		Registry.register(Registry.ITEM, Resources.identifier("tatooine_home_door"), new BlockTatooineHomeDoor.Item(Door.TatooineHomeController, new Item.Settings().group(Galaxies.Tab)));
+	}
+
+	public static void registerBlock(Block block, Identifier identifier)
+	{
+		Registry.register(Registry.BLOCK, identifier, block);
+		Registry.register(Registry.ITEM, identifier, new BlockItem(block, new Item.Settings().group(Galaxies.Tab)));
+	}
+
+	public static void registerBlockEntityType(BlockEntityType<?> blockEntityType, Identifier identifier)
+	{
+		Registry.register(Registry.BLOCK_ENTITY_TYPE, identifier, blockEntityType);
+	}
+
 	public static class Barrel
 	{
 		@RegistryName("desh_barrel")
@@ -42,22 +71,18 @@ public class SwgBlocks
 
 	public static class Crate
 	{
-		@RegistryName("orange_kyber_crate")
-		public static final RotatingBlockWithGuiEntity OctagonOrange = new RotatingBlockWithGuiEntity(FabricBlockSettings.of(Material.METAL).sounds(BlockSoundGroup.METAL).nonOpaque().strength(2.5F).breakByTool(FabricToolTags.PICKAXES, 0), CrateOctagonBlockEntity::new);
-		@RegistryName("gray_kyber_crate")
-		public static final RotatingBlockWithGuiEntity OctagonGray = new RotatingBlockWithGuiEntity(FabricBlockSettings.of(Material.METAL).sounds(BlockSoundGroup.METAL).nonOpaque().strength(2.5F).breakByTool(FabricToolTags.PICKAXES, 0), CrateOctagonBlockEntity::new);
-		@RegistryName("black_kyber_crate")
-		public static final RotatingBlockWithGuiEntity OctagonBlack = new RotatingBlockWithGuiEntity(FabricBlockSettings.of(Material.METAL).sounds(BlockSoundGroup.METAL).nonOpaque().strength(2.5F).breakByTool(FabricToolTags.PICKAXES, 0), CrateOctagonBlockEntity::new);
-		@RegistryName("kyber_crate")
-		public static final BlockEntityType<CrateOctagonBlockEntity> OctagonBlockEntityType = BlockEntityType.Builder.create(CrateOctagonBlockEntity::new, OctagonOrange, OctagonGray, OctagonBlack).build(null);
-
+		public static final Rotating3WideBlockWithGuiEntity OctagonOrange = new Rotating3WideBlockWithGuiEntity(FabricBlockSettings.of(Material.METAL).sounds(BlockSoundGroup.METAL).nonOpaque().strength(2.5F).breakByTool(FabricToolTags.PICKAXES, 0), CrateOctagonBlockEntity::new);
+		public static final Rotating3WideBlockWithGuiEntity OctagonGray = new Rotating3WideBlockWithGuiEntity(FabricBlockSettings.of(Material.METAL).sounds(BlockSoundGroup.METAL).nonOpaque().strength(2.5F).breakByTool(FabricToolTags.PICKAXES, 0), CrateOctagonBlockEntity::new);
+		public static final Rotating3WideBlockWithGuiEntity OctagonBlack = new Rotating3WideBlockWithGuiEntity(FabricBlockSettings.of(Material.METAL).sounds(BlockSoundGroup.METAL).nonOpaque().strength(2.5F).breakByTool(FabricToolTags.PICKAXES, 0), CrateOctagonBlockEntity::new);
 		@RegistryName("toolbox")
 		public static final RotatingBlockWithGuiEntity MosEisley = new RotatingBlockWithGuiEntity(FabricBlockSettings.of(Material.METAL).sounds(BlockSoundGroup.METAL).nonOpaque().strength(2.5F).breakByTool(FabricToolTags.PICKAXES, 0), CrateMosEisleyBlockEntity::new);
-		@RegistryName("toolbox")
-		public static final BlockEntityType<CrateMosEisleyBlockEntity> MosEisleyBlockEntityType = BlockEntityType.Builder.create(CrateMosEisleyBlockEntity::new, MosEisley).build(null);
-
 		@RegistryName("imperial_crate")
 		public static final RotatingBlockWithGuiEntity ImperialCube = new RotatingBlockWithGuiEntity(FabricBlockSettings.of(Material.METAL).sounds(BlockSoundGroup.METAL).nonOpaque().strength(2.5F).breakByTool(FabricToolTags.PICKAXES, 0), CrateImperialCubeBlockEntity::new);
+
+		@RegistryName("kyber_crate")
+		public static final BlockEntityType<CrateOctagonBlockEntity> OctagonBlockEntityType = BlockEntityType.Builder.create(CrateOctagonBlockEntity::new, OctagonOrange, OctagonGray, OctagonBlack).build(null);
+		@RegistryName("toolbox")
+		public static final BlockEntityType<CrateMosEisleyBlockEntity> MosEisleyBlockEntityType = BlockEntityType.Builder.create(CrateMosEisleyBlockEntity::new, MosEisley).build(null);
 		@RegistryName("imperial_crate")
 		public static final BlockEntityType<CrateImperialCubeBlockEntity> ImperialCubeBlockEntityType = BlockEntityType.Builder.create(CrateImperialCubeBlockEntity::new, ImperialCube).build(null);
 	}
@@ -332,28 +357,5 @@ public class SwgBlocks
 		public static final Block IlumBrickSlab = new SlabBlock(AbstractBlock.Settings.copy(IlumBricks));
 		@RegistryName("chiseled_ilum_stone_bricks")
 		public static final Block IlumChiseledBricks = new Block(FabricBlockSettings.of(Material.STONE).strength(1.5F).breakByTool(FabricToolTags.PICKAXES, 0).requiresTool());
-	}
-
-	public static void register()
-	{
-		RegistryHelper.registerAnnotatedFields(SwgBlocks.class, Block.class, SwgBlocks::registerBlock);
-		RegistryHelper.registerAnnotatedFields(SwgBlocks.class, BlockEntityType.class, SwgBlocks::registerBlockEntityType);
-
-		FlammableBlockRegistry.getDefaultInstance().add(SwgBlocks.Leaves.Sequoia, 30, 60);
-
-		Registry.register(Registry.BLOCK, Resources.identifier("tatooine_home_door_controller"), Door.TatooineHomeController);
-		Registry.register(Registry.BLOCK, Resources.identifier("tatooine_home_door"), Door.TatooineHomeFiller);
-		Registry.register(Registry.ITEM, Resources.identifier("tatooine_home_door"), new BlockTatooineHomeDoor.Item(Door.TatooineHomeController, new Item.Settings().group(Galaxies.Tab)));
-	}
-
-	public static void registerBlock(Block block, Identifier identifier)
-	{
-		Registry.register(Registry.BLOCK, identifier, block);
-		Registry.register(Registry.ITEM, identifier, new BlockItem(block, new Item.Settings().group(Galaxies.Tab)));
-	}
-
-	public static void registerBlockEntityType(BlockEntityType<?> blockEntityType, Identifier identifier)
-	{
-		Registry.register(Registry.BLOCK_ENTITY_TYPE, identifier, blockEntityType);
 	}
 }

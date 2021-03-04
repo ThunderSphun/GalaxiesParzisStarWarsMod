@@ -48,6 +48,6 @@ public class RotatingBlock extends Block
 
 	public float getRotationDegrees(BlockState state)
 	{
-		return state.get(FACING).asRotation();
+		return state.get(FACING).asRotation() - 90;
 	}
 }
