@@ -1,9 +1,6 @@
 package com.parzivail.pswg.client.pm3d;
 
-import com.parzivail.util.block.ConnectingNodeBlock;
-import com.parzivail.util.block.DisplacingBlock;
-import com.parzivail.util.block.RotatingBlock;
-import com.parzivail.util.block.VoxelShapeUtil;
+import com.parzivail.util.block.*;
 import com.parzivail.util.client.model.DynamicBakedModel;
 import com.parzivail.util.math.ClientMathUtil;
 import net.fabricmc.fabric.api.renderer.v1.material.RenderMaterial;
@@ -13,6 +10,7 @@ import net.fabricmc.fabric.api.renderer.v1.mesh.MutableQuadView;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
 import net.fabricmc.fabric.api.renderer.v1.model.ModelHelper;
 import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
+import net.fabricmc.fabric.impl.client.indigo.renderer.mesh.MeshImpl;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.PillarBlock;
 import net.minecraft.block.ShapeContext;
@@ -143,6 +141,10 @@ public class PM3DBakedBlockModel extends DynamicBakedModel
 			}
 
 			return meshBuilder.build();
+		}
+
+		if (state.getBlock() instanceof Rotating3WideBlockWithGuiEntity && state.get(Rotating3WideBlockWithGuiEntity.SIDE) != Rotating3WideBlockWithGuiEntity.Side.MIDDLE) {
+			return RENDERER.meshBuilder().build();
 		}
 
 		if (state.getBlock() instanceof DisplacingBlock)
